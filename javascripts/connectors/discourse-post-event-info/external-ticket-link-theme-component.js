@@ -6,8 +6,15 @@ export default class ExternalTicketLink extends Component {
     get ticketLink() {
 
         let url = this.args.outletArgs.event.url;
+        let urlTag = document.querySelector('section.event__section.event-url > a');
+        urlTag.classList.add("btn");
+        urlTag.classList.add("btn-text");
+        urlTag.classList.add("btn-small");
+        urlTag.classList.add("btn-primary");
+        urlTag.innerText = 'Buy Tickets';
 
         let base_domain = "https://insider.in";
+
 
         if (url.startsWith("https://district.in")) {
             base_domain = "https://district.in";
@@ -23,11 +30,7 @@ export default class ExternalTicketLink extends Component {
         }
 
         this.fetchInsiderEventDataByUrl(url, base_domain).then((eventData => {
-            let urlTag = document.querySelector('section.event__section.event-url > a');
-            urlTag.classList.add("btn");
-            urlTag.classList.add("btn-text");
-            urlTag.classList.add("btn-small");
-            urlTag.classList.add("btn-primary");
+
 
             let eventEndTime = new Date(eventData.max_show_end_utc_timestamp * 1000)
 
