@@ -6,15 +6,31 @@ export default class ExternalTicketLink extends Component {
     get ticketLink() {
 
         let url = this.args.outletArgs.event.url;
+
+        let base_domain = "https://insider.in";
+
+        if (!url || url == "") {
+            // Not an valid url
+            return;
+        }
+
         let urlTag = document.querySelector('section.event__section.event-url > a');
         urlTag.classList.add("btn");
         urlTag.classList.add("btn-text");
         urlTag.classList.add("btn-small");
-        urlTag.classList.add("btn-primary");
-        urlTag.innerText = 'Buy Tickets';
 
-        let base_domain = "https://insider.in";
+        if (url.toLowerCase() == "coming soon" || url.toLowerCase() == "tba") {
+            urlTag.innerText = 'Coming Soon!';
+            urlTag.disabled = true;
+            urlTag.href = "#";
+            urlTag.target = "_self";
+            return;
+        }
 
+        if (!(url.startsWith("https://insider.in/") || url.startsWith("https://district.in/") || url.startsWith("https://www.district.in/")) || !url.endsWith("/event")) {
+            // Not an valid insider.in event url;
+            return;
+        }
 
         if (url.startsWith("https://district.in")) {
             base_domain = "https://district.in";
@@ -24,10 +40,8 @@ export default class ExternalTicketLink extends Component {
             base_domain = "https://www.district.in";
         }
 
-        if (!url || !(url.startsWith("https://insider.in/") || url.startsWith("https://district.in/") || url.startsWith("https://www.district.in/")) || !url.endsWith("/event")) {
-            // Not an valid insider.in event url;
-            return;
-        }
+        urlTag.classList.add("btn-primary");
+        urlTag.innerText = 'Buy Tickets';
 
         this.fetchInsiderEventDataByUrl(url, base_domain).then((eventData => {
 
