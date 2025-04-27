@@ -18,6 +18,8 @@ export default class ExternalTicketLink extends Component {
         urlTag.classList.add("btn");
         urlTag.classList.add("btn-text");
         urlTag.classList.add("btn-small");
+        urlTag.classList.add("btn-primary");
+        urlTag.innerText = 'Register Here';
 
         if (url.toLowerCase() == "coming soon" || url.toLowerCase() == "tba") {
             urlTag.innerText = 'Coming Soon!';
@@ -40,7 +42,6 @@ export default class ExternalTicketLink extends Component {
             base_domain = "https://www.district.in";
         }
 
-        urlTag.classList.add("btn-primary");
         urlTag.innerText = 'Buy Tickets';
 
         this.fetchInsiderEventDataByUrl(url, base_domain).then((eventData => {
