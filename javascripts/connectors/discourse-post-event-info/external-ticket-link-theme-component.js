@@ -22,7 +22,7 @@ export default class ExternalTicketLink extends Component {
         urlTag.innerText = 'Register Here';
 
         if (url.toLowerCase() == "coming soon" || url.toLowerCase() == "tba") {
-            urlTag.innerText = 'Coming Soon!';
+            urlTag.innerText = 'Tickets will be available soon!';
             urlTag.disabled = true;
             urlTag.href = "#";
             urlTag.target = "_self";
