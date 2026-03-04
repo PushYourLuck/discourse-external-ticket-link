@@ -50,17 +50,18 @@ export default class ExternalTicketLink extends Component {
             let eventEndTime = new Date(eventData.max_show_end_utc_timestamp * 1000)
 
             if (eventEndTime <= new Date()) {
-                urlTag.innerText = 'Tickets are unavailable';
+                urlTag.innerText = 'Event has ended';
                 urlTag.classList.remove("btn-primary");
                 return;
             }
 
-            if (eventData.event_state === 'sold_out') {
+            if (eventData.event_state === 'sold_out' || eventData.sold_out === true) {
                 urlTag.innerText = 'Event is sold out';
+                urlTag.classList.remove("btn-primary");
                 return;
             }
 
-            urlTag.innerText = 'Buy Tickets ' + "(₹" + eventData.price_display_string + ")";
+            urlTag.innerText = 'Buy Tickets ' + "(₹" + eventData.price_string + ")";
             urlTag.href = 'https://district.in/' + eventData.slug + '/event'
 
         }))
@@ -70,7 +71,7 @@ export default class ExternalTicketLink extends Component {
 
 
         const eventSlug = url.substring(url.indexOf(base_domain) + base_domain.length + 1, url.lastIndexOf("/event"))
-        const response = await fetch("https://api.insider.in/event/getBySlug/" + eventSlug);
+        const response = await fetch("https://api-events.district.in/event/getBySlug/" + eventSlug);
         const eventData = await response.json();
         if (eventData.result !== 'ok') {
             throw new Error("Error calling API");
