@@ -55,7 +55,19 @@ export default class ExternalTicketLink extends Component {
                 return;
             }
 
-            if (eventData.event_state === 'sold_out' || eventData.sold_out === true) {
+            let sold_out = true;
+
+            eventData.venue?.shows?.map(show => {
+                show.items_for_sale?.map(ifs => {
+                    ifs.items?.map(item => {
+                        if (item.item_state != "sold_out") {
+                            sold_out = false
+                        }
+                    })
+                })
+            })
+
+            if (eventData.event_state === 'sold_out' || sold_out) {
                 urlTag.innerText = 'Event is sold out';
                 urlTag.classList.remove("btn-primary");
                 return;
