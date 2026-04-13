@@ -1,94 +1,135 @@
 import Component from "@glimmer/component";
-
+import { tracked } from "@glimmer/tracking";
 
 export default class ExternalTicketLink extends Component {
+  @tracked buttonText = "Loading…";
+  @tracked buttonHref = "#";
+  @tracked buttonTarget = "_blank";
+  @tracked buttonClass = "btn-primary";
+  @tracked isDisabled = false;
+  @tracked showButton = false;
 
-    get ticketLink() {
+  constructor() {
+    super(...arguments);
+    this.processEventUrl();
+  }
 
-        let url = this.args.outletArgs.event.url;
+  get effectiveUrl() {
+    const url = this.args.outletArgs?.event?.url;
+    const location = this.args.outletArgs?.event?.location;
+    return url || location || "";
+  }
 
-        let base_domain = "https://insider.in";
-
-        if (!url || url == "") {
-            // Not an valid url
-            return;
-        }
-
-        let urlTag = document.querySelector('section.event__section.event-url > a');
-        urlTag.classList.add("btn");
-        urlTag.classList.add("btn-text");
-        urlTag.classList.add("btn-small");
-        urlTag.classList.add("btn-primary");
-        urlTag.innerText = 'Register Here';
-
-        if (url.toLowerCase() == "coming soon" || url.toLowerCase() == "tba") {
-            urlTag.innerText = 'Tickets will be available soon!';
-            urlTag.disabled = true;
-            urlTag.href = "#";
-            urlTag.target = "_self";
-            return;
-        }
-
-        if (!(url.startsWith("https://insider.in/") || url.startsWith("https://district.in/") || url.startsWith("https://www.district.in/")) || !url.endsWith("/event")) {
-            // Not an valid insider.in event url;
-            return;
-        }
-
-        if (url.startsWith("https://district.in")) {
-            base_domain = "https://district.in";
-        }
-
-        if (url.startsWith("https://www.district.in")) {
-            base_domain = "https://www.district.in";
-        }
-
-        urlTag.innerText = 'Buy Tickets';
-
-        this.fetchInsiderEventDataByUrl(url, base_domain).then((eventData => {
+  isInsiderUrl(url) {
+    return (
+      (url.startsWith("https://insider.in/") ||
+        url.startsWith("https://district.in/") ||
+        url.startsWith("https://www.district.in/")) &&
+      url.endsWith("/event")
+    );
+  }
 
 
-            let eventEndTime = new Date(eventData.max_show_end_utc_timestamp * 1000)
+  getBaseDomain(url) {
+    if (url.startsWith("https://www.district.in")) {
+      return "https://www.district.in";
+    }
+    if (url.startsWith("https://district.in")) {
+      return "https://district.in";
+    }
+    return "https://insider.in";
+  }
+  async processEventUrl() {
+    const url = this.effectiveUrl;
 
-            if (eventEndTime <= new Date()) {
-                urlTag.innerText = 'Event has ended';
-                urlTag.classList.remove("btn-primary");
-                return;
-            }
+    if (!url) {
 
-            let sold_out = true;
-
-            eventData.venue?.shows?.map(show => {
-                show.items_for_sale?.map(ifs => {
-                    ifs.items?.map(item => {
-                        if (item.item_state != "sold_out") {
-                            sold_out = false
-                        }
-                    })
-                })
-            })
-
-            if (eventData.event_state === 'sold_out' || sold_out) {
-                urlTag.innerText = 'Event is sold out';
-                urlTag.classList.remove("btn-primary");
-                return;
-            }
-
-            urlTag.innerText = 'Buy Tickets ' + "(₹" + eventData.price_string + ")";
-            urlTag.href = 'https://district.in/' + eventData.slug + '/event'
-
-        }))
+      this.showButton = false;
+      return;
     }
 
-    fetchInsiderEventDataByUrl = async function (url, base_domain) {
-
-
-        const eventSlug = url.substring(url.indexOf(base_domain) + base_domain.length + 1, url.lastIndexOf("/event"))
-        const response = await fetch("https://api-events.district.in/event/getBySlug/" + eventSlug);
-        const eventData = await response.json();
-        if (eventData.result !== 'ok') {
-            throw new Error("Error calling API");
-        }
-        return eventData.data;
+    this.showButton = true;
+    if (
+      url.toLowerCase() === "coming soon" ||
+      url.toLowerCase() === "tba"
+    ) {
+      this.buttonText = "Tickets will be available soon!";
+      this.isDisabled = true;
+      this.buttonHref = "#";
+      this.buttonTarget = "_self";
+      this.buttonClass = "btn-primary";
+      return;
     }
 
+    if (!this.isInsiderUrl(url)) {
+      this.buttonText = "Register Here";
+      this.buttonHref = url;
+      this.buttonTarget = "_blank";
+      this.buttonClass = "btn-primary";
+      return;
+    }
+
+    this.buttonText = "Buy Tickets";
+    this.buttonHref = url;
+    this.buttonTarget = "_blank";
+
+    try {
+      const baseDomain = this.getBaseDomain(url);
+      const eventData = await this.fetchInsiderEventData(url, baseDomain);
+
+      // Check if the event has ended
+      const eventEndTime = new Date(
+        eventData.max_show_end_utc_timestamp * 1000
+      );
+      if (eventEndTime <= new Date()) {
+        this.buttonText = "Event has ended";
+        this.buttonClass = "";
+        this.isDisabled = true;
+        return;
+      }
+
+      // Check if the event is sold out
+      let soldOut = true;
+      eventData.venue?.shows?.forEach((show) => {
+        show.items_for_sale?.forEach((ifs) => {
+          ifs.items?.forEach((item) => {
+            if (item.item_state !== "sold_out") {
+              soldOut = false;
+            }
+          });
+        });
+      });
+
+      if (eventData.event_state === "sold_out" || soldOut) {
+        this.buttonText = "Event is sold out";
+        this.buttonClass = "";
+        this.isDisabled = true;
+        return;
+      }
+
+      // Event is live
+      this.buttonText = "Buy Tickets (₹" + eventData.price_string + ")";
+      this.buttonHref =
+        "https://district.in/" + eventData.slug + "/event";
+    } catch {
+      // On API failure keep the default "Buy Tickets" text
+    }
+  }
+
+  async fetchInsiderEventData(url, baseDomain) {
+    const eventSlug = url.substring(
+      url.indexOf(baseDomain) + baseDomain.length + 1,
+      url.lastIndexOf("/event")
+    );
+    const response = await fetch(
+      "https://api-events.district.in/event/getBySlug/" + eventSlug
+    );
+    const eventData = await response.json();
+
+    if (eventData.result !== "ok") {
+      throw new Error("Error calling API");
+    }
+
+    return eventData.data;
+  }
 }

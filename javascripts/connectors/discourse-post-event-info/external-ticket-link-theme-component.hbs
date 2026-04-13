@@ -1,3 +1,18 @@
-{{yield}}
+{{! Render all default event sections EXCEPT Location and URL }}
+<@outletArgs.Dates />
+<@outletArgs.ChatChannel />
+<@outletArgs.Invitees />
+<@outletArgs.Description />
+{{#if @outletArgs.event.canUpdateAttendance}}
+<@outletArgs.Status />
+{{/if}}
 
-{{ this.ticketLink }}
+{{! Custom ticket button replaces the URL and Location fields }}
+{{#if this.showButton}}
+<section class="event__section event-ticket-link">
+  <a href={{this.buttonHref}} target={{this.buttonTarget}} class="btn btn-text btn-small {{this.buttonClass}}"
+    style="width: 100%;" disabled={{this.isDisabled}}>
+    {{this.buttonText}}
+  </a>
+</section>
+{{/if}}
