@@ -1,5 +1,8 @@
 {{! Render all default event sections EXCEPT Location and URL }}
-<@outletArgs.Dates />
+<section class="event__section event-dates">
+  {{d-icon "clock"}}
+  <span>{{this.formattedDate}}</span>
+</section>
 <@outletArgs.ChatChannel />
 <@outletArgs.Invitees />
 <@outletArgs.Description />

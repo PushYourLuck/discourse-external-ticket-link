@@ -20,6 +20,69 @@ export default class ExternalTicketLink extends Component {
     return url || location || "";
   }
 
+  get formattedDate() {
+    const event = this.args.outletArgs?.event;
+    if (!event || !event.startsAt) {
+      return "";
+    }
+
+    const startDate = new Date(event.startsAt);
+    const endDate = event.endsAt ? new Date(event.endsAt) : null;
+
+    const formatTime = (date) => {
+      return date.toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    };
+
+    const formatDate = (date) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+
+      const targetDate = new Date(date);
+      targetDate.setHours(0, 0, 0, 0);
+
+      if (targetDate.getTime() === today.getTime()) {
+        return "Today";
+      } else if (targetDate.getTime() === yesterday.getTime()) {
+        return "Yesterday";
+      } else if (targetDate.getTime() === tomorrow.getTime()) {
+        return "Tomorrow";
+      } else {
+        return new Intl.DateTimeFormat("en-GB", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        }).format(date);
+      }
+    };
+
+    const startStr = `${formatDate(startDate)} ${formatTime(startDate)}`;
+
+    if (!endDate) {
+      return startStr;
+    }
+
+    const isSameDay =
+      startDate.getFullYear() === endDate.getFullYear() &&
+      startDate.getMonth() === endDate.getMonth() &&
+      startDate.getDate() === endDate.getDate();
+
+    if (isSameDay) {
+      return `${startStr} → ${formatTime(endDate)}`;
+    } else {
+      return `${startStr} → ${formatDate(endDate)} ${formatTime(endDate)}`;
+    }
+  }
+
   isInsiderUrl(url) {
     return (
       (url.startsWith("https://insider.in/") ||
