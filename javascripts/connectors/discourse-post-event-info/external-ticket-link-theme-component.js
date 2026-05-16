@@ -104,14 +104,27 @@ export default class ExternalTicketLink extends Component {
   }
   async processEventUrl() {
     const url = this.effectiveUrl;
+    const rawUrl = this.args.outletArgs?.event?.url;
+    const rawLocation = this.args.outletArgs?.event?.location;
 
     if (!url) {
-
       this.showButton = false;
       return;
     }
 
     this.showButton = true;
+
+    if (
+      rawUrl?.toLowerCase() === "sold_out" ||
+      rawLocation?.toLowerCase() === "sold_out"
+    ) {
+      this.buttonText = "Sold Out";
+      this.buttonClass = "";
+      this.isDisabled = true;
+      this.buttonHref = "#";
+      this.buttonTarget = "_self";
+      return;
+    }
     if (
       url.toLowerCase() === "coming soon" ||
       url.toLowerCase() === "tba"
@@ -125,8 +138,14 @@ export default class ExternalTicketLink extends Component {
     }
 
     if (!this.isInsiderUrl(url)) {
-      this.buttonText = "Register Here";
-      this.buttonHref = url;
+      if (url.includes("|")) {
+        const [actualUrl, customText] = url.split("|");
+        this.buttonText = customText.trim();
+        this.buttonHref = actualUrl.trim();
+      } else {
+        this.buttonText = "Register Here";
+        this.buttonHref = url;
+      }
       this.buttonTarget = "_blank";
       this.buttonClass = "btn-primary";
       return;
